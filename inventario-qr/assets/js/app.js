@@ -164,9 +164,41 @@
         }
     };
 
+    /* ── Frontend Login ── */
+    function initLogin() {
+        $('#iqr-login-form').on('submit', function (e) {
+            e.preventDefault();
+            var $btn = $('#iqr-login-submit');
+            var $error = $('#iqr-login-error');
+
+            $btn.prop('disabled', true).text('Signing in...');
+            $error.hide();
+
+            $.post(iqrData.ajaxUrl, {
+                action:   'iqr_login',
+                nonce:    iqrData.loginNonce,
+                username: $('#iqr-login-user').val(),
+                password: $('#iqr-login-pass').val()
+            }, function (res) {
+                if (res.success) {
+                    window.location.reload();
+                } else {
+                    $error.text(res.data.message).show();
+                    $btn.prop('disabled', false).text('Sign In');
+                }
+            }).fail(function () {
+                $error.text('Connection error. Please try again.').show();
+                $btn.prop('disabled', false).text('Sign In');
+            });
+        });
+    }
+
     $(document).ready(function () {
         if ($('#iqr-app').length) {
             IQR.init();
+        }
+        if ($('#iqr-login-form').length) {
+            initLogin();
         }
     });
 

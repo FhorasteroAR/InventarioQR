@@ -1,0 +1,99 @@
+/*
+ * Inventario QR - Frontend overrides
+ * Scoped styles for the shortcode when rendered on the frontend.
+ */
+
+/* ── Login Screen ── */
+.iqr-login-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 480px;
+    padding: 40px 20px;
+    background: var(--iqr-bg, #F5EDE3);
+    border-radius: var(--iqr-radius, 12px);
+}
+
+.iqr-login-card {
+    background: var(--iqr-surface, #FFFFFF);
+    border-radius: var(--iqr-radius, 12px);
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 4px 24px rgba(45, 42, 38, 0.08);
+    text-align: center;
+}
+
+.iqr-login-logo {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 20px;
+    background: var(--iqr-primary, #E8723A);
+    border-radius: var(--iqr-radius, 12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+.iqr-login-card h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: var(--iqr-text, #2D2A26);
+}
+
+.iqr-login-subtitle {
+    font-size: 14px;
+    color: var(--iqr-text-secondary, #8C857C);
+    margin: 0 0 28px;
+}
+
+.iqr-login-form .iqr-form-group {
+    text-align: left;
+}
+
+.iqr-login-error {
+    background: rgba(217, 79, 59, 0.08);
+    color: var(--iqr-danger, #D94F3B);
+    padding: 10px 14px;
+    border-radius: var(--iqr-radius-sm, 8px);
+    font-size: 13px;
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+.iqr-btn-full {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 20px;
+    font-size: 15px;
+}
+
+/* ── Frontend app wrapper ── */
+.iqr-app {
+    border-radius: var(--iqr-radius, 12px);
+    overflow: hidden;
+    border: 1px solid var(--iqr-border, #E8DFD4);
+    min-height: 600px;
+    position: relative;
+}
+
+/* On the frontend, sidebar is inside the shortcode container, not fixed */
+body:not(.wp-admin) .iqr-sidebar {
+    position: absolute;
+}
+
+body:not(.wp-admin) .iqr-header {
+    position: relative;
+}
+
+/* ── No Access ── */
+.iqr-no-access {
+    padding: 40px;
+    text-align: center;
+    background: var(--iqr-bg, #F5EDE3);
+    border-radius: var(--iqr-radius, 12px);
+    color: var(--iqr-text-secondary, #8C857C);
+    font-size: 15px;
+}

@@ -1,0 +1,844 @@
+/*
+ * Inventario QR - Main Styles
+ * Color palette inspired by warm earth tones:
+ *   Primary accent:  #E8723A (warm orange)
+ *   Dark accent:     #6B3A2A (deep brown)
+ *   Background:      #F5EDE3 (warm cream)
+ *   Surface:         #FFFFFF
+ *   Sidebar bg:      #FDF8F3 (light warm)
+ *   Text primary:    #2D2A26
+ *   Text secondary:  #8C857C
+ */
+
+/* ============================================
+   CSS Variables
+   ============================================ */
+:root {
+    --iqr-primary: #E8723A;
+    --iqr-primary-dark: #D0612E;
+    --iqr-primary-light: #F5A67B;
+    --iqr-accent-brown: #6B3A2A;
+    --iqr-accent-brown-light: #8B5E3C;
+    --iqr-bg: #F5EDE3;
+    --iqr-surface: #FFFFFF;
+    --iqr-sidebar-bg: #FDF8F3;
+    --iqr-border: #E8DFD4;
+    --iqr-text: #2D2A26;
+    --iqr-text-secondary: #8C857C;
+    --iqr-text-light: #B5AEA4;
+    --iqr-danger: #D94F3B;
+    --iqr-warning: #E8923A;
+    --iqr-success: #5A9E6F;
+    --iqr-radius: 12px;
+    --iqr-radius-sm: 8px;
+    --iqr-shadow: 0 1px 3px rgba(45, 42, 38, 0.06);
+    --iqr-shadow-md: 0 4px 12px rgba(45, 42, 38, 0.08);
+    --iqr-transition: 0.2s ease;
+}
+
+/* ============================================
+   Hide WP Admin Chrome
+   ============================================ */
+#wpcontent {
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+}
+
+#wpbody-content {
+    padding-bottom: 0 !important;
+}
+
+#wpfooter,
+#adminmenumain,
+#adminmenuback,
+#adminmenuwrap {
+    display: none !important;
+}
+
+#wpadminbar {
+    display: none !important;
+}
+
+html.wp-toolbar {
+    padding-top: 0 !important;
+}
+
+/* ============================================
+   App Layout
+   ============================================ */
+.iqr-app {
+    display: flex;
+    min-height: 100vh;
+    background: var(--iqr-bg);
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+    color: var(--iqr-text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================
+   Sidebar
+   ============================================ */
+.iqr-sidebar {
+    width: 72px;
+    background: var(--iqr-sidebar-bg);
+    border-right: 1px solid var(--iqr-border);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 100;
+    transition: width var(--iqr-transition);
+}
+
+.iqr-sidebar-top,
+.iqr-sidebar-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Logo */
+.iqr-logo {
+    width: 44px;
+    height: 44px;
+    background: var(--iqr-primary);
+    border-radius: var(--iqr-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    margin-bottom: 28px;
+}
+
+/* Navigation */
+.iqr-nav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.iqr-nav-item {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--iqr-radius);
+    color: var(--iqr-text-secondary);
+    text-decoration: none;
+    transition: all var(--iqr-transition);
+    position: relative;
+}
+
+.iqr-nav-item:hover {
+    background: var(--iqr-border);
+    color: var(--iqr-text);
+}
+
+.iqr-nav-item.active {
+    background: var(--iqr-primary);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(232, 114, 58, 0.35);
+}
+
+.iqr-nav-item:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--iqr-primary-light);
+}
+
+.iqr-nav-label {
+    display: none;
+}
+
+/* Sidebar bottom user */
+.iqr-sidebar-bottom .iqr-nav-item {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--iqr-border);
+}
+
+.iqr-sidebar-bottom .iqr-nav-item:hover {
+    background: var(--iqr-accent-brown-light);
+    color: #fff;
+}
+
+.iqr-sidebar-bottom .iqr-nav-item.active {
+    background: var(--iqr-accent-brown);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(107, 58, 42, 0.3);
+}
+
+/* ============================================
+   Main Content
+   ============================================ */
+.iqr-main {
+    flex: 1;
+    margin-left: 72px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Header */
+.iqr-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    background: var(--iqr-bg);
+    border-bottom: 1px solid var(--iqr-border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.iqr-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.iqr-page-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--iqr-text);
+    letter-spacing: -0.02em;
+}
+
+.iqr-header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Search Box */
+.iqr-search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--iqr-surface);
+    border: 1px solid var(--iqr-border);
+    border-radius: var(--iqr-radius);
+    padding: 8px 14px;
+    min-width: 240px;
+    transition: border-color var(--iqr-transition);
+}
+
+.iqr-search-box:focus-within {
+    border-color: var(--iqr-primary);
+    box-shadow: 0 0 0 3px rgba(232, 114, 58, 0.12);
+}
+
+.iqr-search-box svg {
+    color: var(--iqr-text-light);
+    flex-shrink: 0;
+}
+
+.iqr-search-box input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    color: var(--iqr-text);
+    width: 100%;
+    font-family: inherit;
+}
+
+.iqr-search-box input::placeholder {
+    color: var(--iqr-text-light);
+}
+
+/* User Badge */
+.iqr-user-badge {
+    display: flex;
+    align-items: center;
+}
+
+.iqr-user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--iqr-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Content Area */
+.iqr-content {
+    flex: 1;
+    padding: 28px 32px;
+}
+
+/* ============================================
+   Cards
+   ============================================ */
+.iqr-card-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 28px;
+}
+
+.iqr-card {
+    background: var(--iqr-surface);
+    border-radius: var(--iqr-radius);
+    padding: 22px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: var(--iqr-shadow);
+    border: 1px solid var(--iqr-border);
+    transition: box-shadow var(--iqr-transition);
+}
+
+.iqr-card:hover {
+    box-shadow: var(--iqr-shadow-md);
+}
+
+.iqr-card-accent {
+    background: var(--iqr-primary);
+    color: #fff;
+    border-color: transparent;
+}
+
+.iqr-card-accent .iqr-card-label {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.iqr-card-accent .iqr-card-value {
+    color: #fff;
+}
+
+.iqr-card-icon {
+    flex-shrink: 0;
+    opacity: 0.85;
+}
+
+.iqr-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.iqr-card-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--iqr-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.iqr-card-value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--iqr-text);
+}
+
+/* ============================================
+   Panels
+   ============================================ */
+.iqr-panel {
+    background: var(--iqr-surface);
+    border-radius: var(--iqr-radius);
+    box-shadow: var(--iqr-shadow);
+    border: 1px solid var(--iqr-border);
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.iqr-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--iqr-border);
+}
+
+.iqr-panel-header h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--iqr-text);
+}
+
+.iqr-panel-body {
+    padding: 24px;
+}
+
+.iqr-panel-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+/* ============================================
+   Forms
+   ============================================ */
+.iqr-form-group {
+    margin-bottom: 18px;
+}
+
+.iqr-form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--iqr-text);
+    margin-bottom: 6px;
+}
+
+.iqr-input {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    border: 1px solid var(--iqr-border);
+    border-radius: var(--iqr-radius-sm);
+    background: var(--iqr-surface);
+    color: var(--iqr-text);
+    transition: border-color var(--iqr-transition), box-shadow var(--iqr-transition);
+    box-sizing: border-box;
+}
+
+.iqr-input:focus {
+    outline: none;
+    border-color: var(--iqr-primary);
+    box-shadow: 0 0 0 3px rgba(232, 114, 58, 0.12);
+}
+
+.iqr-input::placeholder {
+    color: var(--iqr-text-light);
+}
+
+select.iqr-input {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%238C857C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+textarea.iqr-input {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.iqr-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 20px;
+}
+
+.iqr-form-full {
+    grid-column: 1 / -1;
+}
+
+.iqr-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+.iqr-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    border: none;
+    border-radius: var(--iqr-radius-sm);
+    cursor: pointer;
+    transition: all var(--iqr-transition);
+    text-decoration: none;
+    line-height: 1;
+}
+
+.iqr-btn-primary {
+    background: var(--iqr-primary);
+    color: #fff;
+}
+
+.iqr-btn-primary:hover {
+    background: var(--iqr-primary-dark);
+    box-shadow: 0 2px 8px rgba(232, 114, 58, 0.3);
+}
+
+.iqr-btn-secondary {
+    background: var(--iqr-bg);
+    color: var(--iqr-text);
+    border: 1px solid var(--iqr-border);
+}
+
+.iqr-btn-secondary:hover {
+    background: var(--iqr-border);
+}
+
+.iqr-btn-danger {
+    background: var(--iqr-danger);
+    color: #fff;
+}
+
+.iqr-btn-danger:hover {
+    background: #C04232;
+    box-shadow: 0 2px 8px rgba(217, 79, 59, 0.3);
+}
+
+.iqr-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(232, 114, 58, 0.2);
+}
+
+.iqr-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   Table
+   ============================================ */
+.iqr-table-wrapper {
+    overflow-x: auto;
+}
+
+.iqr-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.iqr-table thead th {
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--iqr-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--iqr-border);
+    white-space: nowrap;
+}
+
+.iqr-table tbody td {
+    padding: 14px 16px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--iqr-border);
+    color: var(--iqr-text);
+}
+
+.iqr-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.iqr-table tbody tr:hover {
+    background: rgba(232, 114, 58, 0.04);
+}
+
+.iqr-empty-state {
+    text-align: center;
+    color: var(--iqr-text-light);
+    padding: 40px 16px !important;
+    font-size: 14px;
+}
+
+/* ============================================
+   Modal
+   ============================================ */
+.iqr-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.iqr-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(45, 42, 38, 0.4);
+    backdrop-filter: blur(4px);
+}
+
+.iqr-modal-content {
+    position: relative;
+    background: var(--iqr-surface);
+    border-radius: var(--iqr-radius);
+    width: 90%;
+    max-width: 560px;
+    box-shadow: 0 16px 48px rgba(45, 42, 38, 0.15);
+    animation: iqrModalIn 0.2s ease;
+}
+
+@keyframes iqrModalIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.iqr-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--iqr-border);
+}
+
+.iqr-modal-header h3 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.iqr-modal-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: var(--iqr-text-secondary);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all var(--iqr-transition);
+}
+
+.iqr-modal-close:hover {
+    background: var(--iqr-bg);
+    color: var(--iqr-text);
+}
+
+.iqr-modal-content form {
+    padding: 24px;
+}
+
+.iqr-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 12px;
+}
+
+/* ============================================
+   QR Preview
+   ============================================ */
+.iqr-qr-preview {
+    margin-top: 24px;
+    padding: 32px;
+    background: var(--iqr-bg);
+    border-radius: var(--iqr-radius);
+    text-align: center;
+    min-height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ============================================
+   Import Dropzone
+   ============================================ */
+.iqr-import-dropzone {
+    border: 2px dashed var(--iqr-border);
+    border-radius: var(--iqr-radius);
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--iqr-transition);
+    margin-bottom: 16px;
+    color: var(--iqr-text-secondary);
+}
+
+.iqr-import-dropzone:hover,
+.iqr-import-dropzone.dragover {
+    border-color: var(--iqr-primary);
+    background: rgba(232, 114, 58, 0.04);
+    color: var(--iqr-primary);
+}
+
+.iqr-import-dropzone p {
+    margin: 12px 0 0;
+    font-size: 14px;
+}
+
+/* ============================================
+   User Profile
+   ============================================ */
+.iqr-user-profile {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.iqr-user-avatar-large {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--iqr-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.iqr-user-details h3 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.iqr-user-role-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--iqr-primary);
+    background: rgba(232, 114, 58, 0.1);
+    border-radius: 20px;
+    margin-bottom: 4px;
+}
+
+.iqr-user-details p {
+    margin: 4px 0 0;
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+.iqr-text-muted {
+    color: var(--iqr-text-secondary);
+    font-size: 14px;
+}
+
+.iqr-text-warning {
+    color: var(--iqr-warning);
+}
+
+/* ============================================
+   Toast Notifications
+   ============================================ */
+.iqr-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 14px 20px;
+    border-radius: var(--iqr-radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+    z-index: 9999;
+    animation: iqrToastIn 0.3s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.iqr-toast-success {
+    background: var(--iqr-success);
+}
+
+.iqr-toast-error {
+    background: var(--iqr-danger);
+}
+
+@keyframes iqrToastIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   Loading Spinner
+   ============================================ */
+.iqr-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--iqr-border);
+    border-top-color: var(--iqr-primary);
+    border-radius: 50%;
+    animation: iqrSpin 0.6s linear infinite;
+    margin: 40px auto;
+}
+
+@keyframes iqrSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 768px) {
+    .iqr-sidebar {
+        width: 60px;
+    }
+
+    .iqr-main {
+        margin-left: 60px;
+    }
+
+    .iqr-header {
+        padding: 16px 20px;
+    }
+
+    .iqr-content {
+        padding: 20px;
+    }
+
+    .iqr-search-box {
+        min-width: 160px;
+    }
+
+    .iqr-panel-row {
+        grid-template-columns: 1fr;
+    }
+
+    .iqr-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .iqr-card-row {
+        grid-template-columns: 1fr;
+    }
+
+    .iqr-nav-item {
+        width: 42px;
+        height: 42px;
+    }
+}

@@ -5,7 +5,7 @@ $user = wp_get_current_user();
 <div class="iqr-section iqr-section-user">
     <div class="iqr-panel">
         <div class="iqr-panel-header">
-            <h2><?php esc_html_e( 'Profile', 'inventario-qr' ); ?></h2>
+            <h2>Perfil</h2>
         </div>
         <div class="iqr-panel-body">
             <div class="iqr-user-profile">
@@ -14,7 +14,7 @@ $user = wp_get_current_user();
                 </div>
                 <div class="iqr-user-details">
                     <h3><?php echo esc_html( $user->display_name ); ?></h3>
-                    <span class="iqr-user-role-badge"><?php esc_html_e( 'Administrator', 'inventario-qr' ); ?></span>
+                    <span class="iqr-user-role-badge">Administrador</span>
                     <p class="iqr-text-muted"><?php echo esc_html( $user->user_email ); ?></p>
                 </div>
             </div>
@@ -23,7 +23,7 @@ $user = wp_get_current_user();
 
     <div class="iqr-panel">
         <div class="iqr-panel-header">
-            <h2><?php esc_html_e( 'Session', 'inventario-qr' ); ?></h2>
+            <h2>Sesión</h2>
         </div>
         <div class="iqr-panel-body">
             <button class="iqr-btn iqr-btn-danger" id="iqr-logout-btn">
@@ -32,7 +32,7 @@ $user = wp_get_current_user();
                     <polyline points="16 17 21 12 16 7"/>
                     <line x1="21" y1="12" x2="9" y2="12"/>
                 </svg>
-                <?php esc_html_e( 'Logout', 'inventario-qr' ); ?>
+                Cerrar sesión
             </button>
         </div>
     </div>

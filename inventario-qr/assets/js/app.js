@@ -9,7 +9,7 @@
             this.loadSection('qr');
         },
 
-        /* ── Navigation ── */
+        /* ── Navegación ── */
         bindNavigation: function () {
             var self = this;
 
@@ -27,15 +27,15 @@
             $el.addClass('active');
         },
 
-        /* ── Section loader ── */
+        /* ── Cargador de secciones ── */
         loadSection: function (section) {
             var self = this;
             var titles = {
-                'qr':            'QR Codes',
-                'inventory':     'Inventory',
-                'export-import': 'Export / Import',
-                'defaults':      'Defaults',
-                'user':          'Profile'
+                'qr':            'Códigos QR',
+                'inventory':     'Inventario',
+                'export-import': 'Exportar / Importar',
+                'defaults':      'Configuración',
+                'user':          'Perfil'
             };
 
             self.currentSection = section;
@@ -52,15 +52,15 @@
                     self.initSectionHandlers(section);
                 } else {
                     $('#iqr-content').html(
-                        '<p class="iqr-text-muted">' + (res.data && res.data.message ? res.data.message : 'Error loading section.') + '</p>'
+                        '<p class="iqr-text-muted">' + (res.data && res.data.message ? res.data.message : 'Error al cargar la sección.') + '</p>'
                     );
                 }
             }).fail(function () {
-                $('#iqr-content').html('<p class="iqr-text-muted">Connection error. Please try again.</p>');
+                $('#iqr-content').html('<p class="iqr-text-muted">Error de conexión. Intentá de nuevo.</p>');
             });
         },
 
-        /* ── Section-specific handlers ── */
+        /* ── Handlers por sección ── */
         initSectionHandlers: function (section) {
             switch (section) {
                 case 'inventory':
@@ -75,12 +75,12 @@
             }
         },
 
-        /* ── Inventory ── */
+        /* ── Inventario ── */
         initInventory: function () {
             var $modal = $('#iqr-item-modal');
 
             $('#iqr-add-item-btn').on('click', function () {
-                $('#iqr-modal-title').text('Add Item');
+                $('#iqr-modal-title').text('Agregar bien');
                 $('#iqr-item-form')[0].reset();
                 $('#iqr-item-id').val('');
                 $modal.fadeIn(200);
@@ -92,27 +92,32 @@
 
             $('#iqr-item-form').on('submit', function (e) {
                 e.preventDefault();
-                IQR.toast('Item saved successfully.', 'success');
+                IQR.toast('Bien guardado correctamente.', 'success');
                 $modal.fadeOut(150);
             });
         },
 
-        /* ── Export / Import ── */
+        /* ── Exportar / Importar ── */
         initExportImport: function () {
             var $dropzone = $('#iqr-import-dropzone');
             var $fileInput = $('#iqr-import-file');
+            var $importBtn = $('#iqr-import-btn');
+            var $status = $('#iqr-import-status');
 
+            // Click en dropzone abre el selector de archivos
             $dropzone.on('click', function () {
                 $fileInput.trigger('click');
             });
 
+            // Al seleccionar archivo
             $fileInput.on('change', function () {
                 if (this.files.length) {
                     $dropzone.find('p').text(this.files[0].name);
-                    $('#iqr-import-btn').prop('disabled', false);
+                    $importBtn.prop('disabled', false);
                 }
             });
 
+            // Drag & drop
             $dropzone.on('dragover', function (e) {
                 e.preventDefault();
                 $(this).addClass('dragover');
@@ -124,20 +129,96 @@
                 if (files.length) {
                     $fileInput[0].files = files;
                     $dropzone.find('p').text(files[0].name);
-                    $('#iqr-import-btn').prop('disabled', false);
+                    $importBtn.prop('disabled', false);
                 }
             });
 
+            // Botón Exportar — descarga real vía AJAX
             $('#iqr-export-btn').on('click', function () {
-                IQR.toast('Export started.', 'success');
+                var format = $('#iqr-export-format').val();
+                var source = $('#iqr-export-source').val();
+
+                IQR.toast('Exportando datos...', 'success');
+
+                $.post(iqrData.ajaxUrl, {
+                    action: 'iqr_export_data',
+                    format: format,
+                    source: source,
+                    nonce:  iqrData.nonce
+                }, function (res) {
+                    if (res.success) {
+                        var blob;
+                        var filename = res.data.filename;
+
+                        if (res.data.format === 'json') {
+                            blob = new Blob([JSON.stringify(res.data.data, null, 2)], { type: 'application/json' });
+                        } else {
+                            blob = new Blob([res.data.data], { type: 'text/csv' });
+                        }
+
+                        var url = URL.createObjectURL(blob);
+                        var a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+
+                        IQR.toast('Exportación completada.', 'success');
+                    } else {
+                        IQR.toast(res.data.message || 'Error al exportar.', 'error');
+                    }
+                }).fail(function () {
+                    IQR.toast('Error de conexión al exportar.', 'error');
+                });
             });
 
-            $('#iqr-import-btn').on('click', function () {
-                IQR.toast('Import started.', 'success');
+            // Botón Importar — sube el archivo vía AJAX con FormData
+            $importBtn.on('click', function () {
+                var files = $fileInput[0].files;
+                if (!files.length) {
+                    IQR.toast('Seleccioná un archivo primero.', 'error');
+                    return;
+                }
+
+                var formData = new FormData();
+                formData.append('action', 'iqr_import_excel');
+                formData.append('nonce', iqrData.nonce);
+                formData.append('import_file', files[0]);
+
+                $importBtn.prop('disabled', true).text('Importando...');
+                $status.show().text('Subiendo archivo...');
+
+                $.ajax({
+                    url: iqrData.ajaxUrl,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        if (res.success) {
+                            $status.text(res.data.message);
+                            IQR.toast(res.data.message, 'success');
+                            // Resetear el dropzone
+                            $dropzone.find('p').text('Arrastrá y soltá un archivo aquí, o hacé clic para buscar');
+                            $fileInput.val('');
+                        } else {
+                            $status.text('Error: ' + (res.data.message || 'Error desconocido.'));
+                            IQR.toast(res.data.message || 'Error al importar.', 'error');
+                        }
+                        $importBtn.prop('disabled', true).text('Importar datos');
+                    },
+                    error: function () {
+                        $status.text('Error de conexión.');
+                        IQR.toast('Error de conexión al importar.', 'error');
+                        $importBtn.prop('disabled', false).text('Importar datos');
+                    }
+                });
             });
         },
 
-        /* ── User / Logout ── */
+        /* ── Usuario / Logout ── */
         initUser: function () {
             $('#iqr-logout-btn').on('click', function () {
                 $.post(iqrData.ajaxUrl, {
@@ -151,7 +232,7 @@
             });
         },
 
-        /* ── Toast notifications ── */
+        /* ── Notificaciones toast ── */
         toast: function (message, type) {
             type = type || 'success';
             var $toast = $('<div class="iqr-toast iqr-toast-' + type + '">' + message + '</div>');

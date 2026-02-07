@@ -10,9 +10,6 @@ class IQR_Auth {
         add_action( 'wp_ajax_iqr_logout', array( $this, 'handle_logout' ) );
     }
 
-    /**
-     * Handle AJAX login requests.
-     */
     public function handle_login() {
         check_ajax_referer( 'iqr_login_nonce', 'nonce' );
 
@@ -20,7 +17,7 @@ class IQR_Auth {
         $password = isset( $_POST['password'] ) ? $_POST['password'] : '';
 
         if ( empty( $username ) || empty( $password ) ) {
-            wp_send_json_error( array( 'message' => __( 'Username and password are required.', 'inventario-qr' ) ) );
+            wp_send_json_error( array( 'message' => 'El usuario y la contraseña son obligatorios.' ) );
         }
 
         $credentials = array(
@@ -32,23 +29,20 @@ class IQR_Auth {
         $user = wp_signon( $credentials, is_ssl() );
 
         if ( is_wp_error( $user ) ) {
-            wp_send_json_error( array( 'message' => __( 'Invalid credentials.', 'inventario-qr' ) ) );
+            wp_send_json_error( array( 'message' => 'Credenciales inválidas.' ) );
         }
 
         if ( ! $this->user_has_access( $user ) ) {
             wp_logout();
-            wp_send_json_error( array( 'message' => __( 'You do not have permission to access the inventory system.', 'inventario-qr' ) ) );
+            wp_send_json_error( array( 'message' => 'No tenés permiso para acceder al sistema de inventario.' ) );
         }
 
         wp_send_json_success( array(
-            'message'  => __( 'Login successful.', 'inventario-qr' ),
+            'message'  => 'Inicio de sesión exitoso.',
             'redirect' => admin_url( 'admin.php?page=inventario-qr' ),
         ) );
     }
 
-    /**
-     * Handle logout requests.
-     */
     public function handle_logout() {
         check_ajax_referer( 'iqr_logout_nonce', 'nonce' );
         wp_logout();
@@ -57,9 +51,6 @@ class IQR_Auth {
         ) );
     }
 
-    /**
-     * Check if a user has access to the inventory system.
-     */
     public function user_has_access( $user ) {
         $allowed_roles = array( 'administrator', 'iqr_admin' );
         foreach ( $allowed_roles as $role ) {

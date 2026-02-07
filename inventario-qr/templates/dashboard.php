@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 $current_user = wp_get_current_user();
 ?>
 <div id="iqr-app" class="iqr-app">
-    <!-- Sidebar -->
+    <!-- Barra lateral -->
     <aside class="iqr-sidebar">
         <div class="iqr-sidebar-top">
             <div class="iqr-logo">
@@ -21,7 +21,7 @@ $current_user = wp_get_current_user();
             </div>
 
             <nav class="iqr-nav">
-                <a href="#" class="iqr-nav-item active" data-section="qr" title="<?php esc_attr_e( 'QR Codes', 'inventario-qr' ); ?>">
+                <a href="#" class="iqr-nav-item active" data-section="qr" title="Códigos QR">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="7" height="7" rx="1"/>
                         <rect x="14" y="3" width="7" height="7" rx="1"/>
@@ -30,30 +30,30 @@ $current_user = wp_get_current_user();
                         <line x1="21" y1="14" x2="21" y2="21"/>
                         <line x1="14" y1="21" x2="21" y2="21"/>
                     </svg>
-                    <span class="iqr-nav-label"><?php esc_html_e( 'QR', 'inventario-qr' ); ?></span>
+                    <span class="iqr-nav-label">QR</span>
                 </a>
 
-                <a href="#" class="iqr-nav-item" data-section="inventory" title="<?php esc_attr_e( 'Inventory', 'inventario-qr' ); ?>">
+                <a href="#" class="iqr-nav-item" data-section="inventory" title="Inventario">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"/>
                     </svg>
-                    <span class="iqr-nav-label"><?php esc_html_e( 'Inventory', 'inventario-qr' ); ?></span>
+                    <span class="iqr-nav-label">Inventario</span>
                 </a>
 
-                <a href="#" class="iqr-nav-item" data-section="export-import" title="<?php esc_attr_e( 'Export / Import', 'inventario-qr' ); ?>">
+                <a href="#" class="iqr-nav-item" data-section="export-import" title="Exportar / Importar">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 3v12M3 15l9 6 9-6"/>
                         <path d="M8 7l4-4 4 4"/>
                     </svg>
-                    <span class="iqr-nav-label"><?php esc_html_e( 'Export/Import', 'inventario-qr' ); ?></span>
+                    <span class="iqr-nav-label">Exportar/Importar</span>
                 </a>
 
-                <a href="#" class="iqr-nav-item" data-section="defaults" title="<?php esc_attr_e( 'Defaults', 'inventario-qr' ); ?>">
+                <a href="#" class="iqr-nav-item" data-section="defaults" title="Configuración">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="3"/>
                         <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
                     </svg>
-                    <span class="iqr-nav-label"><?php esc_html_e( 'Defaults', 'inventario-qr' ); ?></span>
+                    <span class="iqr-nav-label">Configuración</span>
                 </a>
             </nav>
         </div>
@@ -69,11 +69,11 @@ $current_user = wp_get_current_user();
         </div>
     </aside>
 
-    <!-- Main Content -->
+    <!-- Contenido principal -->
     <main class="iqr-main">
         <header class="iqr-header">
             <div class="iqr-header-left">
-                <h1 class="iqr-page-title" id="iqr-page-title"><?php esc_html_e( 'QR Codes', 'inventario-qr' ); ?></h1>
+                <h1 class="iqr-page-title" id="iqr-page-title">Códigos QR</h1>
             </div>
             <div class="iqr-header-right">
                 <div class="iqr-search-box">
@@ -81,7 +81,7 @@ $current_user = wp_get_current_user();
                         <circle cx="11" cy="11" r="8"/>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                     </svg>
-                    <input type="text" id="iqr-search" placeholder="<?php esc_attr_e( 'Search...', 'inventario-qr' ); ?>">
+                    <input type="text" id="iqr-search" placeholder="Buscar...">
                 </div>
                 <div class="iqr-user-badge">
                     <span class="iqr-user-avatar">
@@ -92,7 +92,7 @@ $current_user = wp_get_current_user();
         </header>
 
         <div class="iqr-content" id="iqr-content">
-            <!-- Content loaded dynamically -->
+            <!-- Contenido cargado dinámicamente -->
         </div>
     </main>
 </div>

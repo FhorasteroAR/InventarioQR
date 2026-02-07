@@ -14,7 +14,7 @@
                 </svg>
             </div>
             <div class="iqr-card-info">
-                <span class="iqr-card-label"><?php esc_html_e( 'Total QR Codes', 'inventario-qr' ); ?></span>
+                <span class="iqr-card-label">Total Códigos QR</span>
                 <span class="iqr-card-value" id="iqr-total-qr">0</span>
             </div>
         </div>
@@ -27,7 +27,7 @@
                 </svg>
             </div>
             <div class="iqr-card-info">
-                <span class="iqr-card-label"><?php esc_html_e( 'Generated Today', 'inventario-qr' ); ?></span>
+                <span class="iqr-card-label">Generados hoy</span>
                 <span class="iqr-card-value">0</span>
             </div>
         </div>
@@ -40,7 +40,7 @@
                 </svg>
             </div>
             <div class="iqr-card-info">
-                <span class="iqr-card-label"><?php esc_html_e( 'Scans This Week', 'inventario-qr' ); ?></span>
+                <span class="iqr-card-label">Escaneos esta semana</span>
                 <span class="iqr-card-value">0</span>
             </div>
         </div>
@@ -48,24 +48,24 @@
 
     <div class="iqr-panel">
         <div class="iqr-panel-header">
-            <h2><?php esc_html_e( 'Generate QR Code', 'inventario-qr' ); ?></h2>
+            <h2>Generar Código QR</h2>
         </div>
         <div class="iqr-panel-body">
             <div class="iqr-form-group">
-                <label for="iqr-qr-item"><?php esc_html_e( 'Select Item', 'inventario-qr' ); ?></label>
+                <label for="iqr-qr-item">Seleccionar bien</label>
                 <select id="iqr-qr-item" class="iqr-input">
-                    <option value=""><?php esc_html_e( '-- Select an item --', 'inventario-qr' ); ?></option>
+                    <option value="">-- Seleccionar un bien --</option>
                 </select>
             </div>
             <div class="iqr-form-group">
-                <label for="iqr-qr-content"><?php esc_html_e( 'QR Content', 'inventario-qr' ); ?></label>
-                <input type="text" id="iqr-qr-content" class="iqr-input" placeholder="<?php esc_attr_e( 'Auto-generated from item data', 'inventario-qr' ); ?>" readonly>
+                <label for="iqr-qr-content">Contenido QR</label>
+                <input type="text" id="iqr-qr-content" class="iqr-input" placeholder="Generado automáticamente desde los datos del bien" readonly>
             </div>
             <button class="iqr-btn iqr-btn-primary" id="iqr-generate-qr">
-                <?php esc_html_e( 'Generate QR', 'inventario-qr' ); ?>
+                Generar QR
             </button>
             <div class="iqr-qr-preview" id="iqr-qr-preview">
-                <p class="iqr-text-muted"><?php esc_html_e( 'Select an item to generate its QR code.', 'inventario-qr' ); ?></p>
+                <p class="iqr-text-muted">Seleccioná un bien para generar su código QR.</p>
             </div>
         </div>
     </div>

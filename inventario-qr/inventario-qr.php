@@ -26,7 +26,7 @@ require_once IQR_PLUGIN_DIR . 'includes/class-iqr-admin.php';
 require_once IQR_PLUGIN_DIR . 'includes/class-iqr-database.php';
 
 /**
- * Plugin activation.
+ * Activación del plugin.
  */
 function iqr_activate() {
     IQR_Database::create_tables();
@@ -36,7 +36,7 @@ function iqr_activate() {
 register_activation_hook( __FILE__, 'iqr_activate' );
 
 /**
- * Plugin deactivation.
+ * Desactivación del plugin.
  */
 function iqr_deactivate() {
     IQR_Roles::remove_roles();
@@ -45,7 +45,7 @@ function iqr_deactivate() {
 register_deactivation_hook( __FILE__, 'iqr_deactivate' );
 
 /**
- * Initialize the plugin.
+ * Inicializar el plugin.
  */
 function iqr_init() {
     $auth  = new IQR_Auth();
@@ -54,11 +54,11 @@ function iqr_init() {
 add_action( 'init', 'iqr_init' );
 
 /**
- * Shortcode [inventario_qr] — renders the Inventario QR dashboard on the front end.
+ * Shortcode [inventario_qr] — renderiza el panel de Inventario QR en el front end.
  */
 function iqr_shortcode( $atts ) {
     if ( ! is_user_logged_in() || ! current_user_can( 'iqr_manage_inventory' ) ) {
-        return '<p>' . esc_html__( 'You do not have permission to view the inventory.', 'inventario-qr' ) . '</p>';
+        return '<p>No tenés permiso para ver el inventario.</p>';
     }
 
     wp_enqueue_style(
@@ -92,15 +92,15 @@ function iqr_shortcode( $atts ) {
 add_shortcode( 'inventario_qr', 'iqr_shortcode' );
 
 /**
- * Helper: get the current user IQR role label.
+ * Helper: obtener el rol IQR del usuario actual.
  */
 function iqr_get_current_user_role() {
     $user = wp_get_current_user();
     if ( in_array( 'administrator', (array) $user->roles, true ) ) {
-        return __( 'Administrator', 'inventario-qr' );
+        return 'Administrador';
     }
     if ( in_array( 'iqr_admin', (array) $user->roles, true ) ) {
-        return __( 'Inventario Admin', 'inventario-qr' );
+        return 'Admin Inventario';
     }
-    return __( 'User', 'inventario-qr' );
+    return 'Usuario';
 }

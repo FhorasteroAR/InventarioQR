@@ -40,7 +40,7 @@
                 <h2>Importar</h2>
             </div>
             <div class="iqr-panel-body">
-                <p class="iqr-text-muted">Subí un archivo CSV o JSON para importar datos de bienes al inventario.</p>
+                <p class="iqr-text-muted">Subí un archivo ODS o XLSX para importar datos de bienes al inventario.</p>
                 <div class="iqr-import-dropzone" id="iqr-import-dropzone">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
@@ -48,7 +48,7 @@
                         <line x1="12" y1="3" x2="12" y2="15"/>
                     </svg>
                     <p>Arrastrá y soltá un archivo aquí, o hacé clic para buscar</p>
-                    <input type="file" id="iqr-import-file" accept=".csv,.json" style="display:none;">
+                    <input type="file" id="iqr-import-file" accept=".ods,.xlsx" style="display:none;">
                 </div>
                 <div id="iqr-import-status" style="display:none;" class="iqr-text-muted"></div>
                 <button class="iqr-btn iqr-btn-secondary" id="iqr-import-btn" disabled>

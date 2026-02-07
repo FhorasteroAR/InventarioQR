@@ -138,8 +138,6 @@
                 var format = $('#iqr-export-format').val();
                 var source = $('#iqr-export-source').val();
 
-                IQR.toast('Exportando datos...', 'success');
-
                 $.post(iqrData.ajaxUrl, {
                     action: 'iqr_export_data',
                     format: format,

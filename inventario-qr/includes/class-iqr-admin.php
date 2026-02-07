@@ -98,7 +98,7 @@ class IQR_Admin {
     }
 
     /**
-     * AJAX: importar datos desde archivo CSV/JSON a las tablas sp_bienes_origen y ss_bienes_control.
+     * AJAX: importar datos desde archivo ODS/XLSX a las tablas sp_bienes_origen y ss_bienes_control.
      */
     public function ajax_import_excel() {
         check_ajax_referer( 'iqr_ajax_nonce', 'nonce' );
@@ -114,14 +114,26 @@ class IQR_Admin {
         $file = $_FILES['import_file'];
         $ext  = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
 
-        if ( ! in_array( $ext, array( 'csv', 'json' ), true ) ) {
-            wp_send_json_error( array( 'message' => 'Formato no soportado. Usá CSV o JSON.' ) );
+        if ( ! in_array( $ext, array( 'xlsx', 'ods' ), true ) ) {
+            wp_send_json_error( array( 'message' => 'Formato no soportado. Usá archivos XLSX o ODS.' ) );
         }
 
-        $content = file_get_contents( $file['tmp_name'] );
+        if ( ! class_exists( 'ZipArchive' ) ) {
+            wp_send_json_error( array( 'message' => 'El servidor no tiene la extensión ZIP habilitada. Contactá al administrador.' ) );
+        }
 
-        if ( false === $content || empty( $content ) ) {
-            wp_send_json_error( array( 'message' => 'El archivo está vacío o no se pudo leer.' ) );
+        if ( 'xlsx' === $ext ) {
+            $rows = $this->parse_xlsx( $file['tmp_name'] );
+        } else {
+            $rows = $this->parse_ods( $file['tmp_name'] );
+        }
+
+        if ( is_string( $rows ) ) {
+            wp_send_json_error( array( 'message' => $rows ) );
+        }
+
+        if ( empty( $rows ) ) {
+            wp_send_json_error( array( 'message' => 'No se encontraron datos en el archivo.' ) );
         }
 
         global $wpdb;
@@ -135,19 +147,6 @@ class IQR_Admin {
             'caract_patrimonial', 'sub_caract_patrimonial', 'denominacion',
             'ver_bien', 'etiqueta', 'seleccione',
         );
-
-        if ( 'csv' === $ext ) {
-            $rows = $this->parse_csv( $content );
-        } else {
-            $rows = json_decode( $content, true );
-            if ( ! is_array( $rows ) ) {
-                wp_send_json_error( array( 'message' => 'El archivo JSON no tiene un formato válido.' ) );
-            }
-        }
-
-        if ( empty( $rows ) ) {
-            wp_send_json_error( array( 'message' => 'No se encontraron datos en el archivo.' ) );
-        }
 
         foreach ( $rows as $row ) {
             $data = array();
@@ -184,28 +183,162 @@ class IQR_Admin {
         ) );
     }
 
-    private function parse_csv( $content ) {
-        $rows   = array();
-        $lines  = preg_split( '/\r\n|\r|\n/', $content );
-        $header = null;
+    /**
+     * Parsear archivo XLSX (Office Open XML) usando ZipArchive.
+     * Retorna array de filas asociativas o string de error.
+     */
+    private function parse_xlsx( $filepath ) {
+        $zip = new ZipArchive();
+        if ( true !== $zip->open( $filepath ) ) {
+            return 'No se pudo abrir el archivo XLSX.';
+        }
 
-        foreach ( $lines as $line ) {
-            if ( empty( trim( $line ) ) ) {
-                continue;
+        // Leer strings compartidos
+        $shared_strings = array();
+        $ss_xml = $zip->getFromName( 'xl/sharedStrings.xml' );
+        if ( $ss_xml ) {
+            $ss_doc = new DOMDocument();
+            $ss_doc->loadXML( $ss_xml );
+            $si_nodes = $ss_doc->getElementsByTagName( 'si' );
+            foreach ( $si_nodes as $si ) {
+                $text = '';
+                $t_nodes = $si->getElementsByTagName( 't' );
+                foreach ( $t_nodes as $t ) {
+                    $text .= $t->nodeValue;
+                }
+                $shared_strings[] = $text;
+            }
+        }
+
+        // Leer la primera hoja (sheet1)
+        $sheet_xml = $zip->getFromName( 'xl/worksheets/sheet1.xml' );
+        if ( ! $sheet_xml ) {
+            $zip->close();
+            return 'No se encontró la hoja de datos en el archivo XLSX.';
+        }
+
+        $doc = new DOMDocument();
+        $doc->loadXML( $sheet_xml );
+        $row_nodes = $doc->getElementsByTagName( 'row' );
+
+        $all_rows = array();
+        foreach ( $row_nodes as $row_node ) {
+            $cells = $row_node->getElementsByTagName( 'c' );
+            $row_data = array();
+            foreach ( $cells as $cell ) {
+                $col_index = $this->xlsx_col_index( $cell->getAttribute( 'r' ) );
+                $type = $cell->getAttribute( 't' );
+                $v_nodes = $cell->getElementsByTagName( 'v' );
+                $value = $v_nodes->length ? $v_nodes->item( 0 )->nodeValue : '';
+
+                if ( 's' === $type && isset( $shared_strings[ (int) $value ] ) ) {
+                    $value = $shared_strings[ (int) $value ];
+                }
+
+                $row_data[ $col_index ] = $value;
+            }
+            $all_rows[] = $row_data;
+        }
+
+        $zip->close();
+
+        return $this->map_rows_with_header( $all_rows );
+    }
+
+    /**
+     * Parsear archivo ODS (OpenDocument Spreadsheet) usando ZipArchive.
+     * Retorna array de filas asociativas o string de error.
+     */
+    private function parse_ods( $filepath ) {
+        $zip = new ZipArchive();
+        if ( true !== $zip->open( $filepath ) ) {
+            return 'No se pudo abrir el archivo ODS.';
+        }
+
+        $content_xml = $zip->getFromName( 'content.xml' );
+        $zip->close();
+
+        if ( ! $content_xml ) {
+            return 'No se encontró content.xml en el archivo ODS.';
+        }
+
+        $doc = new DOMDocument();
+        $doc->loadXML( $content_xml );
+
+        // Buscar la primera tabla
+        $tables = $doc->getElementsByTagNameNS( 'urn:oasis:names:tc:opendocument:xmlns:table:1.0', 'table' );
+        if ( 0 === $tables->length ) {
+            return 'No se encontró ninguna tabla en el archivo ODS.';
+        }
+
+        $table = $tables->item( 0 );
+        $table_rows = $table->getElementsByTagNameNS( 'urn:oasis:names:tc:opendocument:xmlns:table:1.0', 'table-row' );
+
+        $all_rows = array();
+        foreach ( $table_rows as $tr ) {
+            $cells = $tr->getElementsByTagNameNS( 'urn:oasis:names:tc:opendocument:xmlns:table:1.0', 'table-cell' );
+            $row_data = array();
+            $col = 0;
+
+            foreach ( $cells as $cell ) {
+                // Manejar columnas repetidas
+                $repeat = $cell->getAttributeNS( 'urn:oasis:names:tc:opendocument:xmlns:table:1.0', 'number-columns-repeated' );
+                $repeat = $repeat ? (int) $repeat : 1;
+
+                $p_nodes = $cell->getElementsByTagNameNS( 'urn:oasis:names:tc:opendocument:xmlns:text:1.0', 'p' );
+                $value = '';
+                foreach ( $p_nodes as $p ) {
+                    $value .= $p->nodeValue;
+                }
+
+                for ( $r = 0; $r < $repeat; $r++ ) {
+                    $row_data[ $col ] = $value;
+                    $col++;
+                }
             }
 
-            $fields = str_getcsv( $line, ',', '"' );
-
-            if ( null === $header ) {
-                $header = array_map( function ( $h ) {
-                    return sanitize_key( str_replace( array( '.', ' ' ), '_', strtolower( trim( $h ) ) ) );
-                }, $fields );
-                continue;
+            // Ignorar filas completamente vacías
+            $non_empty = array_filter( $row_data, function ( $v ) { return '' !== $v; } );
+            if ( ! empty( $non_empty ) ) {
+                $all_rows[] = $row_data;
             }
+        }
 
+        return $this->map_rows_with_header( $all_rows );
+    }
+
+    /**
+     * Convertir letra de columna XLSX (ej: "A1", "B2", "AA3") a índice numérico (0-based).
+     */
+    private function xlsx_col_index( $cell_ref ) {
+        $letters = preg_replace( '/[0-9]/', '', $cell_ref );
+        $index = 0;
+        $len = strlen( $letters );
+        for ( $i = 0; $i < $len; $i++ ) {
+            $index = $index * 26 + ( ord( strtoupper( $letters[ $i ] ) ) - ord( 'A' ) + 1 );
+        }
+        return $index - 1;
+    }
+
+    /**
+     * Tomar la primera fila como header y mapear el resto como arrays asociativos.
+     */
+    private function map_rows_with_header( $all_rows ) {
+        if ( count( $all_rows ) < 2 ) {
+            return array();
+        }
+
+        $header_row = array_shift( $all_rows );
+        $header = array();
+        foreach ( $header_row as $i => $h ) {
+            $header[ $i ] = sanitize_key( str_replace( array( '.', ' ' ), '_', strtolower( trim( $h ) ) ) );
+        }
+
+        $rows = array();
+        foreach ( $all_rows as $raw ) {
             $row = array();
             foreach ( $header as $i => $key ) {
-                $row[ $key ] = isset( $fields[ $i ] ) ? $fields[ $i ] : '';
+                $row[ $key ] = isset( $raw[ $i ] ) ? $raw[ $i ] : '';
             }
             $rows[] = $row;
         }

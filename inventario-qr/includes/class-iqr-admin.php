@@ -114,18 +114,24 @@ class IQR_Admin {
         $file = $_FILES['import_file'];
         $ext  = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
 
-        if ( ! in_array( $ext, array( 'xlsx', 'ods' ), true ) ) {
-            wp_send_json_error( array( 'message' => 'Formato no soportado. Usá archivos XLSX o ODS.' ) );
+        if ( ! in_array( $ext, array( 'xlsx', 'ods', 'csv' ), true ) ) {
+            wp_send_json_error( array( 'message' => 'Formato no soportado. Usá archivos XLSX, CSV o ODS.' ) );
         }
 
-        if ( ! class_exists( 'ZipArchive' ) ) {
+        if ( in_array( $ext, array( 'xlsx', 'ods' ), true ) && ! class_exists( 'ZipArchive' ) ) {
             wp_send_json_error( array( 'message' => 'El servidor no tiene la extensión ZIP habilitada. Contactá al administrador.' ) );
         }
 
         if ( 'xlsx' === $ext ) {
             $rows = $this->parse_xlsx( $file['tmp_name'] );
-        } else {
+        } elseif ( 'ods' === $ext ) {
             $rows = $this->parse_ods( $file['tmp_name'] );
+        } else {
+            $content = file_get_contents( $file['tmp_name'] );
+            if ( false === $content || empty( $content ) ) {
+                wp_send_json_error( array( 'message' => 'El archivo está vacío o no se pudo leer.' ) );
+            }
+            $rows = $this->parse_csv( $content );
         }
 
         if ( is_string( $rows ) ) {
@@ -346,6 +352,38 @@ class IQR_Admin {
         return $rows;
     }
 
+    /**
+     * Parsear contenido CSV a array de filas asociativas.
+     */
+    private function parse_csv( $content ) {
+        $rows   = array();
+        $lines  = preg_split( '/\r\n|\r|\n/', $content );
+        $header = null;
+
+        foreach ( $lines as $line ) {
+            if ( empty( trim( $line ) ) ) {
+                continue;
+            }
+
+            $fields = str_getcsv( $line, ',', '"' );
+
+            if ( null === $header ) {
+                $header = array_map( function ( $h ) {
+                    return sanitize_key( str_replace( array( '.', ' ' ), '_', strtolower( trim( $h ) ) ) );
+                }, $fields );
+                continue;
+            }
+
+            $row = array();
+            foreach ( $header as $i => $key ) {
+                $row[ $key ] = isset( $fields[ $i ] ) ? $fields[ $i ] : '';
+            }
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
     private function parse_date( $date_string ) {
         $timestamp = strtotime( $date_string );
         if ( false !== $timestamp ) {
@@ -380,11 +418,21 @@ class IQR_Admin {
             wp_send_json_error( array( 'message' => 'No hay datos para exportar.' ) );
         }
 
-        if ( 'json' === $format ) {
+        $timestamp = date( 'Y-m-d_His' );
+
+        if ( 'xlsx' === $format ) {
+            $xlsx_data = $this->build_xlsx( $results );
             wp_send_json_success( array(
-                'format'   => 'json',
-                'data'     => $results,
-                'filename' => $source . '_' . date( 'Y-m-d_His' ) . '.json',
+                'format'   => 'xlsx',
+                'data'     => base64_encode( $xlsx_data ),
+                'filename' => $source . '_' . $timestamp . '.xlsx',
+            ) );
+        } elseif ( 'ods' === $format ) {
+            $ods_data = $this->build_ods( $results );
+            wp_send_json_success( array(
+                'format'   => 'ods',
+                'data'     => base64_encode( $ods_data ),
+                'filename' => $source . '_' . $timestamp . '.ods',
             ) );
         } else {
             $csv = '';
@@ -398,8 +446,174 @@ class IQR_Admin {
             wp_send_json_success( array(
                 'format'   => 'csv',
                 'data'     => $csv,
-                'filename' => $source . '_' . date( 'Y-m-d_His' ) . '.csv',
+                'filename' => $source . '_' . $timestamp . '.csv',
             ) );
         }
+    }
+
+    /**
+     * Generar archivo XLSX en memoria.
+     */
+    private function build_xlsx( $results ) {
+        $tmp = tempnam( sys_get_temp_dir(), 'iqr_xlsx_' );
+        $zip = new ZipArchive();
+        $zip->open( $tmp, ZipArchive::CREATE | ZipArchive::OVERWRITE );
+
+        $headers = array_keys( $results[0] );
+
+        // [Content_Types].xml
+        $zip->addFromString( '[Content_Types].xml',
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' .
+            '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' .
+            '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' .
+            '<Default Extension="xml" ContentType="application/xml"/>' .
+            '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' .
+            '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' .
+            '<Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>' .
+            '</Types>'
+        );
+
+        // _rels/.rels
+        $zip->addFromString( '_rels/.rels',
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' .
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' .
+            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' .
+            '</Relationships>'
+        );
+
+        // xl/_rels/workbook.xml.rels
+        $zip->addFromString( 'xl/_rels/workbook.xml.rels',
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' .
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' .
+            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' .
+            '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>' .
+            '</Relationships>'
+        );
+
+        // xl/workbook.xml
+        $zip->addFromString( 'xl/workbook.xml',
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' .
+            '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' .
+            '<sheets><sheet name="Datos" sheetId="1" r:id="rId1"/></sheets>' .
+            '</workbook>'
+        );
+
+        // Construir sharedStrings y sheet
+        $strings = array();
+        $string_index = array();
+
+        $sheet = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' .
+                 '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>';
+
+        // Header row
+        $sheet .= '<row r="1">';
+        foreach ( $headers as $ci => $h ) {
+            $col_letter = $this->xlsx_col_letter( $ci );
+            if ( ! isset( $string_index[ $h ] ) ) {
+                $string_index[ $h ] = count( $strings );
+                $strings[] = $h;
+            }
+            $sheet .= '<c r="' . $col_letter . '1" t="s"><v>' . $string_index[ $h ] . '</v></c>';
+        }
+        $sheet .= '</row>';
+
+        // Data rows
+        foreach ( $results as $ri => $row ) {
+            $row_num = $ri + 2;
+            $sheet .= '<row r="' . $row_num . '">';
+            foreach ( $headers as $ci => $h ) {
+                $val = isset( $row[ $h ] ) ? (string) $row[ $h ] : '';
+                $col_letter = $this->xlsx_col_letter( $ci );
+                if ( ! isset( $string_index[ $val ] ) ) {
+                    $string_index[ $val ] = count( $strings );
+                    $strings[] = $val;
+                }
+                $sheet .= '<c r="' . $col_letter . $row_num . '" t="s"><v>' . $string_index[ $val ] . '</v></c>';
+            }
+            $sheet .= '</row>';
+        }
+
+        $sheet .= '</sheetData></worksheet>';
+        $zip->addFromString( 'xl/worksheets/sheet1.xml', $sheet );
+
+        // sharedStrings.xml
+        $ss = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' .
+              '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="' . count( $strings ) . '" uniqueCount="' . count( $strings ) . '">';
+        foreach ( $strings as $s ) {
+            $ss .= '<si><t>' . htmlspecialchars( $s, ENT_XML1, 'UTF-8' ) . '</t></si>';
+        }
+        $ss .= '</sst>';
+        $zip->addFromString( 'xl/sharedStrings.xml', $ss );
+
+        $zip->close();
+        $data = file_get_contents( $tmp );
+        unlink( $tmp );
+        return $data;
+    }
+
+    /**
+     * Generar archivo ODS en memoria.
+     */
+    private function build_ods( $results ) {
+        $tmp = tempnam( sys_get_temp_dir(), 'iqr_ods_' );
+        $zip = new ZipArchive();
+        $zip->open( $tmp, ZipArchive::CREATE | ZipArchive::OVERWRITE );
+
+        $headers = array_keys( $results[0] );
+
+        $zip->addFromString( 'mimetype', 'application/vnd.oasis.opendocument.spreadsheet' );
+
+        $zip->addFromString( 'META-INF/manifest.xml',
+            '<?xml version="1.0" encoding="UTF-8"?>' .
+            '<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0">' .
+            '<manifest:file-entry manifest:full-path="/" manifest:media-type="application/vnd.oasis.opendocument.spreadsheet"/>' .
+            '<manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>' .
+            '</manifest:manifest>'
+        );
+
+        $content = '<?xml version="1.0" encoding="UTF-8"?>' .
+            '<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"' .
+            ' xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"' .
+            ' xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0">' .
+            '<office:body><office:spreadsheet><table:table table:name="Datos">';
+
+        // Header
+        $content .= '<table:table-row>';
+        foreach ( $headers as $h ) {
+            $content .= '<table:table-cell><text:p>' . htmlspecialchars( $h, ENT_XML1, 'UTF-8' ) . '</text:p></table:table-cell>';
+        }
+        $content .= '</table:table-row>';
+
+        // Data
+        foreach ( $results as $row ) {
+            $content .= '<table:table-row>';
+            foreach ( $headers as $h ) {
+                $val = isset( $row[ $h ] ) ? (string) $row[ $h ] : '';
+                $content .= '<table:table-cell><text:p>' . htmlspecialchars( $val, ENT_XML1, 'UTF-8' ) . '</text:p></table:table-cell>';
+            }
+            $content .= '</table:table-row>';
+        }
+
+        $content .= '</table:table></office:spreadsheet></office:body></office:document-content>';
+        $zip->addFromString( 'content.xml', $content );
+
+        $zip->close();
+        $data = file_get_contents( $tmp );
+        unlink( $tmp );
+        return $data;
+    }
+
+    /**
+     * Convertir índice de columna (0-based) a letra XLSX (A, B, ..., Z, AA, AB...).
+     */
+    private function xlsx_col_letter( $index ) {
+        $letter = '';
+        $index++;
+        while ( $index > 0 ) {
+            $index--;
+            $letter = chr( 65 + ( $index % 26 ) ) . $letter;
+            $index = intval( $index / 26 );
+        }
+        return $letter;
     }
 }

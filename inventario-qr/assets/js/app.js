@@ -147,9 +147,19 @@
                     if (res.success) {
                         var blob;
                         var filename = res.data.filename;
+                        var fmt = res.data.format;
 
-                        if (res.data.format === 'json') {
-                            blob = new Blob([JSON.stringify(res.data.data, null, 2)], { type: 'application/json' });
+                        if (fmt === 'xlsx' || fmt === 'ods') {
+                            // Datos binarios en base64
+                            var binary = atob(res.data.data);
+                            var bytes = new Uint8Array(binary.length);
+                            for (var i = 0; i < binary.length; i++) {
+                                bytes[i] = binary.charCodeAt(i);
+                            }
+                            var mime = fmt === 'xlsx'
+                                ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                                : 'application/vnd.oasis.opendocument.spreadsheet';
+                            blob = new Blob([bytes], { type: mime });
                         } else {
                             blob = new Blob([res.data.data], { type: 'text/csv' });
                         }
@@ -172,11 +182,11 @@
                 });
             });
 
-            // Botón Importar — sube el archivo vía AJAX con FormData
+            // Botón Importar — abre buscador si no hay archivo, o sube vía AJAX
             $importBtn.on('click', function () {
                 var files = $fileInput[0].files;
                 if (!files.length) {
-                    IQR.toast('Seleccioná un archivo primero.', 'error');
+                    $fileInput.trigger('click');
                     return;
                 }
 

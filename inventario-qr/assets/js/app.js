@@ -173,11 +173,11 @@
                 });
             });
 
-            // Botón Importar — sube el archivo vía AJAX con FormData
+            // Botón Importar — abre selector de archivos si no hay archivo, o sube vía AJAX
             $importBtn.on('click', function () {
                 var files = $fileInput[0].files;
                 if (!files.length) {
-                    IQR.toast('Seleccioná un archivo primero.', 'error');
+                    $fileInput.trigger('click');
                     return;
                 }
 

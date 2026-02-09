@@ -52,7 +52,7 @@
                     <input type="file" id="iqr-import-file" accept=".xlsx,.ods,.csv" style="display:none;">
                 </div>
                 <div id="iqr-import-status" style="display:none;" class="iqr-text-muted"></div>
-                <button class="iqr-btn iqr-btn-secondary" id="iqr-import-btn" disabled>
+                <button class="iqr-btn iqr-btn-secondary" id="iqr-import-btn">
                     Importar datos
                 </button>
             </div>

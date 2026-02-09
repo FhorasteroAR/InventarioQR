@@ -63,14 +63,6 @@ html.wp-toolbar {
     padding-top: 0 !important;
 }
 
-#wpbody {
-    position: static !important;
-}
-
-#wpbody-content {
-    overflow: visible !important;
-}
-
 /* ============================================
    App Layout
    ============================================ */
@@ -90,15 +82,15 @@ html.wp-toolbar {
    ============================================ */
 .iqr-sidebar {
     width: 72px;
+    min-width: 72px;
     background: var(--iqr-sidebar-bg);
     border-right: 1px solid var(--iqr-border);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     padding: 20px 0;
-    position: fixed;
+    position: sticky;
     top: 0;
-    left: 0;
     height: 100vh;
     z-index: 100;
     transition: width var(--iqr-transition);
@@ -189,12 +181,10 @@ html.wp-toolbar {
    ============================================ */
 .iqr-main {
     flex: 1;
-    margin-left: 72px;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    position: relative;
-    z-index: 1;
 }
 
 /* Header */
@@ -817,10 +807,7 @@ textarea.iqr-input {
 @media (max-width: 768px) {
     .iqr-sidebar {
         width: 60px;
-    }
-
-    .iqr-main {
-        margin-left: 60px;
+        min-width: 60px;
     }
 
     .iqr-header {
@@ -850,9 +837,5 @@ textarea.iqr-input {
     .iqr-nav-item {
         width: 42px;
         height: 42px;
-    }
-
-    .iqr-sidebar {
-        z-index: 100;
     }
 }

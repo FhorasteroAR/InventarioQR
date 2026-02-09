@@ -63,6 +63,14 @@ html.wp-toolbar {
     padding-top: 0 !important;
 }
 
+#wpbody {
+    position: static !important;
+}
+
+#wpbody-content {
+    overflow: visible !important;
+}
+
 /* ============================================
    App Layout
    ============================================ */
@@ -185,6 +193,8 @@ html.wp-toolbar {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    position: relative;
+    z-index: 1;
 }
 
 /* Header */
@@ -840,5 +850,9 @@ textarea.iqr-input {
     .iqr-nav-item {
         width: 42px;
         height: 42px;
+    }
+
+    .iqr-sidebar {
+        z-index: 100;
     }
 }

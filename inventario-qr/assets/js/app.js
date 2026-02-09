@@ -150,10 +150,16 @@
                         var blob;
                         var filename = res.data.filename;
 
-                        if (res.data.format === 'json') {
-                            blob = new Blob([JSON.stringify(res.data.data, null, 2)], { type: 'application/json' });
-                        } else {
+                        if (res.data.format === 'csv') {
                             blob = new Blob([res.data.data], { type: 'text/csv' });
+                        } else {
+                            // XLSX and ODS arrive as base64-encoded binary
+                            var raw = atob(res.data.data);
+                            var bytes = new Uint8Array(raw.length);
+                            for (var i = 0; i < raw.length; i++) {
+                                bytes[i] = raw.charCodeAt(i);
+                            }
+                            blob = new Blob([bytes], { type: res.data.mime });
                         }
 
                         var url = URL.createObjectURL(blob);

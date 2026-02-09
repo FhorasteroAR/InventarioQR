@@ -98,7 +98,7 @@ class IQR_Admin {
     }
 
     /**
-     * AJAX: importar datos desde archivo CSV/JSON a las tablas sp_bienes_origen y ss_bienes_control.
+     * AJAX: importar datos desde archivo CSV/XLSX/ODS a las tablas sp_bienes_origen y ss_bienes_control.
      */
     public function ajax_import_excel() {
         check_ajax_referer( 'iqr_ajax_nonce', 'nonce' );
@@ -114,14 +114,24 @@ class IQR_Admin {
         $file = $_FILES['import_file'];
         $ext  = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
 
-        if ( ! in_array( $ext, array( 'csv', 'json' ), true ) ) {
-            wp_send_json_error( array( 'message' => 'Formato no soportado. Usá CSV o JSON.' ) );
+        if ( ! in_array( $ext, array( 'csv', 'xlsx', 'ods' ), true ) ) {
+            wp_send_json_error( array( 'message' => 'Formato no soportado. Usá CSV, XLSX o ODS.' ) );
         }
 
-        $content = file_get_contents( $file['tmp_name'] );
+        if ( 'csv' === $ext ) {
+            $content = file_get_contents( $file['tmp_name'] );
+            if ( false === $content || empty( $content ) ) {
+                wp_send_json_error( array( 'message' => 'El archivo está vacío o no se pudo leer.' ) );
+            }
+            $rows = IQR_Spreadsheet::import_csv( $content );
+        } elseif ( 'xlsx' === $ext ) {
+            $rows = IQR_Spreadsheet::import_xlsx( $file['tmp_name'] );
+        } else {
+            $rows = IQR_Spreadsheet::import_ods( $file['tmp_name'] );
+        }
 
-        if ( false === $content || empty( $content ) ) {
-            wp_send_json_error( array( 'message' => 'El archivo está vacío o no se pudo leer.' ) );
+        if ( empty( $rows ) ) {
+            wp_send_json_error( array( 'message' => 'No se encontraron datos en el archivo.' ) );
         }
 
         global $wpdb;
@@ -135,19 +145,6 @@ class IQR_Admin {
             'caract_patrimonial', 'sub_caract_patrimonial', 'denominacion',
             'ver_bien', 'etiqueta', 'seleccione',
         );
-
-        if ( 'csv' === $ext ) {
-            $rows = $this->parse_csv( $content );
-        } else {
-            $rows = json_decode( $content, true );
-            if ( ! is_array( $rows ) ) {
-                wp_send_json_error( array( 'message' => 'El archivo JSON no tiene un formato válido.' ) );
-            }
-        }
-
-        if ( empty( $rows ) ) {
-            wp_send_json_error( array( 'message' => 'No se encontraron datos en el archivo.' ) );
-        }
 
         foreach ( $rows as $row ) {
             $data = array();
@@ -184,35 +181,6 @@ class IQR_Admin {
         ) );
     }
 
-    private function parse_csv( $content ) {
-        $rows   = array();
-        $lines  = preg_split( '/\r\n|\r|\n/', $content );
-        $header = null;
-
-        foreach ( $lines as $line ) {
-            if ( empty( trim( $line ) ) ) {
-                continue;
-            }
-
-            $fields = str_getcsv( $line, ',', '"' );
-
-            if ( null === $header ) {
-                $header = array_map( function ( $h ) {
-                    return sanitize_key( str_replace( array( '.', ' ' ), '_', strtolower( trim( $h ) ) ) );
-                }, $fields );
-                continue;
-            }
-
-            $row = array();
-            foreach ( $header as $i => $key ) {
-                $row[ $key ] = isset( $fields[ $i ] ) ? $fields[ $i ] : '';
-            }
-            $rows[] = $row;
-        }
-
-        return $rows;
-    }
-
     private function parse_date( $date_string ) {
         $timestamp = strtotime( $date_string );
         if ( false !== $timestamp ) {
@@ -234,6 +202,10 @@ class IQR_Admin {
         $format = isset( $_POST['format'] ) ? sanitize_key( $_POST['format'] ) : 'csv';
         $source = isset( $_POST['source'] ) ? sanitize_key( $_POST['source'] ) : 'control';
 
+        if ( ! in_array( $format, array( 'csv', 'xlsx', 'ods' ), true ) ) {
+            $format = 'csv';
+        }
+
         global $wpdb;
         if ( 'origen' === $source ) {
             $table = $wpdb->prefix . 'sp_bienes_origen';
@@ -247,25 +219,33 @@ class IQR_Admin {
             wp_send_json_error( array( 'message' => 'No hay datos para exportar.' ) );
         }
 
-        if ( 'json' === $format ) {
-            wp_send_json_success( array(
-                'format'   => 'json',
-                'data'     => $results,
-                'filename' => $source . '_' . date( 'Y-m-d_His' ) . '.json',
-            ) );
-        } else {
-            $csv = '';
-            $csv .= implode( ',', array_keys( $results[0] ) ) . "\n";
-            foreach ( $results as $row ) {
-                $csv .= implode( ',', array_map( function ( $v ) {
-                    return '"' . str_replace( '"', '""', $v ) . '"';
-                }, $row ) ) . "\n";
-            }
+        $filename = $source . '_' . date( 'Y-m-d_His' ) . '.' . $format;
 
+        if ( 'csv' === $format ) {
             wp_send_json_success( array(
                 'format'   => 'csv',
-                'data'     => $csv,
-                'filename' => $source . '_' . date( 'Y-m-d_His' ) . '.csv',
+                'data'     => IQR_Spreadsheet::export_csv( $results ),
+                'filename' => $filename,
+            ) );
+        } else {
+            if ( 'xlsx' === $format ) {
+                $binary = IQR_Spreadsheet::export_xlsx( $results );
+                $mime   = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+            } else {
+                $binary = IQR_Spreadsheet::export_ods( $results );
+                $mime   = 'application/vnd.oasis.opendocument.spreadsheet';
+            }
+
+            if ( empty( $binary ) ) {
+                wp_send_json_error( array( 'message' => 'Error al generar el archivo.' ) );
+            }
+
+            // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+            wp_send_json_success( array(
+                'format'   => $format,
+                'data'     => base64_encode( $binary ),
+                'mime'     => $mime,
+                'filename' => $filename,
             ) );
         }
     }

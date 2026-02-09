@@ -24,6 +24,7 @@ require_once IQR_PLUGIN_DIR . 'includes/class-iqr-roles.php';
 require_once IQR_PLUGIN_DIR . 'includes/class-iqr-auth.php';
 require_once IQR_PLUGIN_DIR . 'includes/class-iqr-admin.php';
 require_once IQR_PLUGIN_DIR . 'includes/class-iqr-database.php';
+require_once IQR_PLUGIN_DIR . 'includes/class-iqr-spreadsheet.php';
 
 /**
  * Activación del plugin.

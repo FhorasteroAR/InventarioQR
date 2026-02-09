@@ -3,6 +3,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx as WriterXlsx;
+use PhpOffice\PhpSpreadsheet\Writer\Ods as WriterOds;
+use PhpOffice\PhpSpreadsheet\Writer\Csv as WriterCsv;
+
 class IQR_Admin {
 
     public function __construct() {
@@ -98,7 +104,7 @@ class IQR_Admin {
     }
 
     /**
-     * AJAX: importar datos desde archivo CSV/JSON a las tablas sp_bienes_origen y ss_bienes_control.
+     * AJAX: importar datos desde archivo XLSX/ODS/CSV a las tablas sp_bienes_origen y ss_bienes_control.
      */
     public function ajax_import_excel() {
         check_ajax_referer( 'iqr_ajax_nonce', 'nonce' );
@@ -114,14 +120,24 @@ class IQR_Admin {
         $file = $_FILES['import_file'];
         $ext  = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
 
-        if ( ! in_array( $ext, array( 'csv', 'json' ), true ) ) {
-            wp_send_json_error( array( 'message' => 'Formato no soportado. Usá CSV o JSON.' ) );
+        if ( ! in_array( $ext, array( 'xlsx', 'ods', 'csv' ), true ) ) {
+            wp_send_json_error( array( 'message' => 'Formato no soportado. Usá XLSX, ODS o CSV.' ) );
         }
 
-        $content = file_get_contents( $file['tmp_name'] );
+        $tmp_path = $file['tmp_name'];
 
-        if ( false === $content || empty( $content ) ) {
+        if ( ! file_exists( $tmp_path ) || 0 === filesize( $tmp_path ) ) {
             wp_send_json_error( array( 'message' => 'El archivo está vacío o no se pudo leer.' ) );
+        }
+
+        try {
+            $rows = $this->parse_spreadsheet( $tmp_path, $ext );
+        } catch ( \Exception $e ) {
+            wp_send_json_error( array( 'message' => 'Error al leer el archivo: ' . $e->getMessage() ) );
+        }
+
+        if ( empty( $rows ) ) {
+            wp_send_json_error( array( 'message' => 'No se encontraron datos en el archivo.' ) );
         }
 
         global $wpdb;
@@ -135,19 +151,6 @@ class IQR_Admin {
             'caract_patrimonial', 'sub_caract_patrimonial', 'denominacion',
             'ver_bien', 'etiqueta', 'seleccione',
         );
-
-        if ( 'csv' === $ext ) {
-            $rows = $this->parse_csv( $content );
-        } else {
-            $rows = json_decode( $content, true );
-            if ( ! is_array( $rows ) ) {
-                wp_send_json_error( array( 'message' => 'El archivo JSON no tiene un formato válido.' ) );
-            }
-        }
-
-        if ( empty( $rows ) ) {
-            wp_send_json_error( array( 'message' => 'No se encontraron datos en el archivo.' ) );
-        }
 
         foreach ( $rows as $row ) {
             $data = array();
@@ -168,10 +171,8 @@ class IQR_Admin {
                 $data['f_recepcion'] = $this->parse_date( $data['f_recepcion'] );
             }
 
-            // Insertar en sp_bienes_origen (respaldo crudo)
             $wpdb->insert( $table_origen, $data );
 
-            // Insertar en ss_bienes_control (gestión)
             $data['estado_auditoria'] = 'pendiente';
             $wpdb->insert( $table_control, $data );
 
@@ -184,28 +185,43 @@ class IQR_Admin {
         ) );
     }
 
-    private function parse_csv( $content ) {
-        $rows   = array();
-        $lines  = preg_split( '/\r\n|\r|\n/', $content );
-        $header = null;
+    /**
+     * Lee un archivo de hoja de cálculo (XLSX, ODS o CSV) y devuelve un array de filas asociativas.
+     */
+    private function parse_spreadsheet( $file_path, $ext ) {
+        $reader_type = array(
+            'xlsx' => 'Xlsx',
+            'ods'  => 'Ods',
+            'csv'  => 'Csv',
+        );
 
-        foreach ( $lines as $line ) {
-            if ( empty( trim( $line ) ) ) {
+        $reader = IOFactory::createReader( $reader_type[ $ext ] );
+
+        if ( 'csv' === $ext ) {
+            $reader->setDelimiter( ',' );
+            $reader->setEnclosure( '"' );
+        }
+
+        $spreadsheet = $reader->load( $file_path );
+        $worksheet   = $spreadsheet->getActiveSheet();
+        $data        = $worksheet->toArray( null, true, true, false );
+
+        if ( empty( $data ) ) {
+            return array();
+        }
+
+        $header = array_map( function ( $h ) {
+            return sanitize_key( str_replace( array( '.', ' ' ), '_', strtolower( trim( (string) $h ) ) ) );
+        }, array_shift( $data ) );
+
+        $rows = array();
+        foreach ( $data as $row_values ) {
+            if ( empty( array_filter( $row_values, function ( $v ) { return '' !== trim( (string) $v ); } ) ) ) {
                 continue;
             }
-
-            $fields = str_getcsv( $line, ',', '"' );
-
-            if ( null === $header ) {
-                $header = array_map( function ( $h ) {
-                    return sanitize_key( str_replace( array( '.', ' ' ), '_', strtolower( trim( $h ) ) ) );
-                }, $fields );
-                continue;
-            }
-
             $row = array();
             foreach ( $header as $i => $key ) {
-                $row[ $key ] = isset( $fields[ $i ] ) ? $fields[ $i ] : '';
+                $row[ $key ] = isset( $row_values[ $i ] ) ? (string) $row_values[ $i ] : '';
             }
             $rows[] = $row;
         }
@@ -222,7 +238,7 @@ class IQR_Admin {
     }
 
     /**
-     * AJAX: exportar datos de ss_bienes_control o sp_bienes_origen.
+     * AJAX: exportar datos de ss_bienes_control o sp_bienes_origen en formato XLSX, ODS o CSV.
      */
     public function ajax_export_data() {
         check_ajax_referer( 'iqr_ajax_nonce', 'nonce' );
@@ -231,8 +247,12 @@ class IQR_Admin {
             wp_send_json_error( array( 'message' => 'No autorizado.' ) );
         }
 
-        $format = isset( $_POST['format'] ) ? sanitize_key( $_POST['format'] ) : 'csv';
+        $format = isset( $_POST['format'] ) ? sanitize_key( $_POST['format'] ) : 'xlsx';
         $source = isset( $_POST['source'] ) ? sanitize_key( $_POST['source'] ) : 'control';
+
+        if ( ! in_array( $format, array( 'xlsx', 'ods', 'csv' ), true ) ) {
+            wp_send_json_error( array( 'message' => 'Formato no soportado.' ) );
+        }
 
         global $wpdb;
         if ( 'origen' === $source ) {
@@ -247,26 +267,66 @@ class IQR_Admin {
             wp_send_json_error( array( 'message' => 'No hay datos para exportar.' ) );
         }
 
-        if ( 'json' === $format ) {
-            wp_send_json_success( array(
-                'format'   => 'json',
-                'data'     => $results,
-                'filename' => $source . '_' . date( 'Y-m-d_His' ) . '.json',
-            ) );
-        } else {
-            $csv = '';
-            $csv .= implode( ',', array_keys( $results[0] ) ) . "\n";
-            foreach ( $results as $row ) {
-                $csv .= implode( ',', array_map( function ( $v ) {
-                    return '"' . str_replace( '"', '""', $v ) . '"';
-                }, $row ) ) . "\n";
-            }
+        $spreadsheet = new Spreadsheet();
+        $sheet       = $spreadsheet->getActiveSheet();
 
-            wp_send_json_success( array(
-                'format'   => 'csv',
-                'data'     => $csv,
-                'filename' => $source . '_' . date( 'Y-m-d_His' ) . '.csv',
-            ) );
+        // Escribir encabezados.
+        $headers = array_keys( $results[0] );
+        foreach ( $headers as $col_index => $header ) {
+            $sheet->setCellValue( [ $col_index + 1, 1 ], $header );
         }
+
+        // Escribir filas de datos.
+        $row_num = 2;
+        foreach ( $results as $row ) {
+            $col_index = 1;
+            foreach ( $row as $value ) {
+                $sheet->setCellValue( [ $col_index, $row_num ], $value );
+                $col_index++;
+            }
+            $row_num++;
+        }
+
+        $ext_map = array(
+            'xlsx' => 'xlsx',
+            'ods'  => 'ods',
+            'csv'  => 'csv',
+        );
+
+        $mime_map = array(
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'ods'  => 'application/vnd.oasis.opendocument.spreadsheet',
+            'csv'  => 'text/csv',
+        );
+
+        $filename = $source . '_' . date( 'Y-m-d_His' ) . '.' . $ext_map[ $format ];
+
+        // Escribir a un archivo temporal y codificar en base64 para enviar vía JSON.
+        $tmp_file = wp_tempnam( $filename );
+
+        switch ( $format ) {
+            case 'xlsx':
+                $writer = new WriterXlsx( $spreadsheet );
+                break;
+            case 'ods':
+                $writer = new WriterOds( $spreadsheet );
+                break;
+            case 'csv':
+                $writer = new WriterCsv( $spreadsheet );
+                $writer->setDelimiter( ',' );
+                $writer->setEnclosure( '"' );
+                break;
+        }
+
+        $writer->save( $tmp_file );
+        $file_data = base64_encode( file_get_contents( $tmp_file ) );
+        unlink( $tmp_file );
+
+        wp_send_json_success( array(
+            'format'   => $format,
+            'data'     => $file_data,
+            'filename' => $filename,
+            'mime'     => $mime_map[ $format ],
+        ) );
     }
 }

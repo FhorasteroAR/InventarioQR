@@ -147,19 +147,18 @@
                     nonce:  iqrData.nonce
                 }, function (res) {
                     if (res.success) {
-                        var blob;
-                        var filename = res.data.filename;
-
-                        if (res.data.format === 'json') {
-                            blob = new Blob([JSON.stringify(res.data.data, null, 2)], { type: 'application/json' });
-                        } else {
-                            blob = new Blob([res.data.data], { type: 'text/csv' });
+                        var byteChars = atob(res.data.data);
+                        var byteNumbers = new Array(byteChars.length);
+                        for (var i = 0; i < byteChars.length; i++) {
+                            byteNumbers[i] = byteChars.charCodeAt(i);
                         }
+                        var byteArray = new Uint8Array(byteNumbers);
+                        var blob = new Blob([byteArray], { type: res.data.mime });
 
                         var url = URL.createObjectURL(blob);
                         var a = document.createElement('a');
                         a.href = url;
-                        a.download = filename;
+                        a.download = res.data.filename;
                         document.body.appendChild(a);
                         a.click();
                         document.body.removeChild(a);

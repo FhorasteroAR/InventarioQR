@@ -19,6 +19,11 @@ define( 'IQR_VERSION', '1.0.0' );
 define( 'IQR_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'IQR_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
+// Composer autoloader (PhpSpreadsheet)
+if ( file_exists( IQR_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
+    require_once IQR_PLUGIN_DIR . 'vendor/autoload.php';
+}
+
 // Includes
 require_once IQR_PLUGIN_DIR . 'includes/class-iqr-roles.php';
 require_once IQR_PLUGIN_DIR . 'includes/class-iqr-auth.php';

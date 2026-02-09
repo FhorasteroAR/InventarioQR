@@ -34,21 +34,34 @@
     --iqr-shadow: 0 1px 3px rgba(45, 42, 38, 0.06);
     --iqr-shadow-md: 0 4px 12px rgba(45, 42, 38, 0.08);
     --iqr-transition: 0.2s ease;
+    --iqr-sidebar-width: 72px;
 }
 
 /* ============================================
    Hide WP Admin Chrome
    ============================================ */
-#wpcontent {
+#wpcontent,
+.auto-fold #wpcontent,
+.folded #wpcontent,
+body.wp-admin #wpcontent {
     padding-left: 0 !important;
     margin-left: 0 !important;
 }
 
+#wpbody {
+    position: static !important;
+    padding-left: 0 !important;
+}
+
 #wpbody-content {
     padding-bottom: 0 !important;
+    overflow: visible !important;
+    padding-left: 0 !important;
+    margin-left: 0 !important;
 }
 
 #wpfooter,
+#adminmenu,
 #adminmenumain,
 #adminmenuback,
 #adminmenuwrap {
@@ -61,14 +74,6 @@
 
 html.wp-toolbar {
     padding-top: 0 !important;
-}
-
-#wpbody {
-    position: static !important;
-}
-
-#wpbody-content {
-    overflow: visible !important;
 }
 
 /* ============================================
@@ -89,7 +94,7 @@ html.wp-toolbar {
    Sidebar
    ============================================ */
 .iqr-sidebar {
-    width: 72px;
+    width: var(--iqr-sidebar-width);
     background: var(--iqr-sidebar-bg);
     border-right: 1px solid var(--iqr-border);
     display: flex;
@@ -189,7 +194,7 @@ html.wp-toolbar {
    ============================================ */
 .iqr-main {
     flex: 1;
-    margin-left: 72px;
+    margin-left: var(--iqr-sidebar-width) !important;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -815,12 +820,8 @@ textarea.iqr-input {
    Responsive
    ============================================ */
 @media (max-width: 768px) {
-    .iqr-sidebar {
-        width: 60px;
-    }
-
-    .iqr-main {
-        margin-left: 60px;
+    :root {
+        --iqr-sidebar-width: 60px;
     }
 
     .iqr-header {
@@ -850,9 +851,5 @@ textarea.iqr-input {
     .iqr-nav-item {
         width: 42px;
         height: 42px;
-    }
-
-    .iqr-sidebar {
-        z-index: 100;
     }
 }
